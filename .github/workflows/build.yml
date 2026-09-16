@@ -1,0 +1,56 @@
+name: Build MAXPay APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Create Cordova Project
+        run: |
+          cordova create build com.maxpay.app MAXPay
+          rm -rf build/www
+          mkdir -p build/www
+          cp -r index.html admin.html css js config.xml build/www/
+
+      - name: Add Android Platform
+        working-directory: build
+        run: cordova platform add android
+
+      - name: Build APK
+        working-directory: build
+        run: cordova build android --release
+
+      - name: Rename APK
+        run: |
+          mkdir -p output
+          cp build/platforms/android/app/build/outputs/apk/release/*.apk output/MAXPay.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MAXPay-APK
+          path: output/MAXPay.apk
