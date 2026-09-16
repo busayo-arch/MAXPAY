@@ -41,10 +41,22 @@ jobs:
         working-directory: build
         run: cordova build android --release
 
-      - name: Rename APK
+      - name: List APK files (debug)
+        run: |
+          echo "=== Searching for APKs ==="
+          find build -name "*.apk" -type f
+
+      - name: Copy APK to output
         run: |
           mkdir -p output
-          cp build/platforms/android/app/build/outputs/apk/release/*.apk output/MAXPay.apk
+          APK=$(find build -name "*.apk" -type f | head -1)
+          echo "Found APK: $APK"
+          if [ -z "$APK" ]; then
+            echo "ERROR: No APK found!"
+            exit 1
+          fi
+          cp "$APK" output/MAXPay.apk
+          ls -la output/
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
